@@ -6,7 +6,7 @@ from db import db
 
 app = Flask(__name__)
 api = Api(app)
-CORS(app, origins="http://localhost:3000")
+CORS(app, origins=["http://localhost:3000", "http://mlb-stats.s3-website.us-east-2.amazonaws.com"])
 
 
 class Stats(Resource):
