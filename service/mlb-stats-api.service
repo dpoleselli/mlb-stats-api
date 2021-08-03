@@ -1,0 +1,11 @@
+[Unit]
+Description=Gunicorn instance for running the mlb-stats-api
+After=network.target
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/mlb-stats-api
+ExecStart=/home/ubuntu/mlb-stats-api/venv/bin/gunicorn -b 0.0.0.0:8080 app:app
+Restart=always
+[Install]
+WantedBy=multi-user.target
