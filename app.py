@@ -1,54 +1,111 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 from flask_cors import CORS
-import requests
-
+from dateutil.parser import parse
+from db import db
 
 app = Flask(__name__)
 api = Api(app)
 CORS(app, origins="http://localhost:3000")
 
+
 class Stats(Resource):
     def get(self):
-        runs_scored = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-        runs_allowed = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
-        total_scored = 0
-        total_allowed = 0
         team_id = request.args.get("teamId")
-        team_id = int(team_id)
-        start_date = request.args.get("startDate")
-        end_date = request.args.get("endDate")
+        start_date = parse(request.args.get("startDate")).date().isoformat()
+        end_date = parse(request.args.get("endDate")).date().isoformat()
 
-        schedule = requests.get(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate={start_date}&endDate={end_date}&teamId={team_id}&gameType=R")
-        schedule = schedule.json()
+        runs = db[team_id].aggregate(
+            [
+                {
+                    '$match': {
+                        'date': { '$gte': start_date},
+                        'date': { '$lte': end_date}
+                    }
+                }, {
+                    '$group': {
+                        '_id': '$allowed', 
+                        '1': {
+                            '$sum': '$1'
+                        }, 
+                        '2': {
+                            '$sum': '$2'
+                        }, 
+                        '3': {
+                            '$sum': '$3'
+                        }, 
+                        '4': {
+                            '$sum': '$4'
+                        }, 
+                        '5': {
+                            '$sum': '$5'
+                        }, 
+                        '6': {
+                            '$sum': '$6'
+                        }, 
+                        '7': {
+                            '$sum': '$7'
+                        }, 
+                        '8': {
+                            '$sum': '$8'
+                        }, 
+                        '9': {
+                            '$sum': '$9'
+                        }, 
+                        '10': {
+                            '$sum': '$10'
+                        }, 
+                        '11': {
+                            '$sum': '$11'
+                        }, 
+                        '12': {
+                            '$sum': '$12'
+                        }, 
+                        '13': {
+                            '$sum': '$13'
+                        }, 
+                        '14': {
+                            '$sum': '$14'
+                        }, 
+                        '15': {
+                            '$sum': '$15'
+                        }
+                    }
+                },
+                {
+                    '$sort': {
+                        '_id': 1 # will return runs scored first
+                    }
+                }
+            ]
+        )
+        runs = list(runs)
+       
+        if len(runs) > 0:
+            runs[0].pop("_id")
 
-        for date in schedule["dates"]:
-            for game in date["games"]:
-                home_away = "home" if game["teams"]["home"]["team"]["id"] == team_id else "away"
-                home_away_opposite = "home" if home_away == "away" else "away"
-                
-                data = requests.get("https://statsapi.mlb.com" + game["link"])
-                data = data.json()
+            # remove unnecessary extra innings from runs_scored
+            for i in range(20, 9, -1):
+                x = str(i)
+                if x in runs[0]:
+                    if runs[0][x] == 0:
+                        runs[0].pop(x, None)
+                    else:
+                        break
 
-                for inning in data["liveData"]["linescore"]["innings"]:
-                    # runs scored
-                    if "runs" in inning[home_away]:
-                        # handle extra innings if necessary
-                        if inning["num"] not in runs_scored:
-                            runs_scored[inning["num"]] = 0
+        if len(runs) > 1:
+            runs[1].pop("_id")
 
-                        runs_scored[inning["num"]] = runs_scored[inning["num"]] + inning[home_away]["runs"]
-                        total_scored = total_scored + inning[home_away]["runs"]
-                    
-                    # runs allowed
-                    if "runs" in inning[home_away_opposite]:
-                        # handle extra innings if necessary
-                        if inning["num"] not in runs_allowed:
-                            runs_allowed[inning["num"]] = 0
+            # remove unnecessary extra innings from runs_allowed
+            for i in range(20, 9, -1):
+                x = str(i)
+                if len(runs) > 1 and x in runs[1]:
+                    if runs[1][x] == 0:
+                        runs[1].pop(x, None)
+                    else:
+                        break
 
-                        runs_allowed[inning["num"]] = runs_allowed[inning["num"]] + inning[home_away_opposite]["runs"]
-                        total_allowed = total_allowed + inning[home_away_opposite]["runs"]
-        return {"scored": runs_scored, "allowed": runs_allowed, "total_scored": total_scored, "total_allowed": total_allowed}, 200 
+        return {"scored": runs[0] if len(runs) > 0 else None, "allowed": runs[1] if len(runs) > 1 else None}, 200 
 
 api.add_resource(Stats, '/stats')
 
