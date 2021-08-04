@@ -56,6 +56,7 @@ def save_data():
         for date, innings in dates.items():
             replacement = {str(key): value for key, value in innings.items()}
             replacement["date"] = datetime.strptime(date, "%Y-%m-%d")
+            replacement["allowed"] = False
 
             team_collection.replace_one({"date": replacement["date"], "allowed": False}, replacement, True)
 
