@@ -4,8 +4,7 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/home/ubuntu/mlb-stats-api
-ExecStart=/home/ubuntu/mlb-stats-api/venv/bin/python data_capture.py
+ExecStart=/home/ubuntu/mlb-stats-api/venv/bin/python /home/ubuntu/mlb-stats-api/data_capture.py
 Restart=always
 [Install]
 WantedBy=multi-user.target
