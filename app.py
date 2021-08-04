@@ -12,15 +12,14 @@ CORS(app, origins=["http://localhost:3000", "http://mlb-stats.s3-website.us-east
 class Stats(Resource):
     def get(self):
         team_id = request.args.get("teamId")
-        start_date = parse(request.args.get("startDate")).date().isoformat()
-        end_date = parse(request.args.get("endDate")).date().isoformat()
+        start_date = parse(request.args.get("startDate"))
+        end_date = parse(request.args.get("endDate"))
 
         runs = db[team_id].aggregate(
             [
                 {
                     '$match': {
-                        'date': { '$gte': start_date},
-                        'date': { '$lte': end_date}
+                        'date': { '$gte': start_date, '$lte': end_date}
                     }
                 }, {
                     '$group': {

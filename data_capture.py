@@ -1,6 +1,6 @@
 import schedule
 import time
-from datetime import date
+from datetime import date, datetime
 import requests
 from db import db
 
@@ -50,17 +50,17 @@ def save_data():
 
         for date, innings in dates.items():
             replacement = {str(key): value for key, value in innings.items()}
-            replacement["date"] = date
+            replacement["date"] = datetime.strptime(date, "%Y-%m-%d")
 
-            team_collection.replace_one({"date": date, "allowed": False}, replacement, True)
+            team_collection.replace_one({"date": replacement["date"], "allowed": False}, replacement, True)
 
         if teamId in allowed_data:
             for date, innings in allowed_data[teamId].items():
                 replacement = {str(key): value for key, value in innings.items()}
-                replacement["date"] = date
+                replacement["date"] = datetime.strptime(date, "%Y-%m-%d")
                 replacement["allowed"] = True
 
-                team_collection.replace_one({"date": date, "allowed": True}, replacement, True)
+                team_collection.replace_one({"date": replacement["date"], "allowed": True}, replacement, True)
 
 
 def get_all_data():
