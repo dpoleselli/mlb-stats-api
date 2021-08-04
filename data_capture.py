@@ -1,4 +1,5 @@
 import schedule
+import sys
 import time
 from datetime import date, datetime
 import requests
@@ -6,6 +7,10 @@ from db import db
 
 scored_data = {}
 allowed_data = {}
+
+def print_out(value):
+    print(value)
+    sys.stdout.flush()
 
 def put(which, team, date, inning, runs):
     if team not in which:
@@ -34,17 +39,17 @@ def process_game(game, date):
 
 
 def process_dates(dates):
-    print("processing dates")
+    print_out("processing dates")
     for date in dates:
         string_date = date["date"]
-        print(f"processing games on {string_date}")
+        print_out(f"processing games on {string_date}")
 
         for game in date["games"]:
             process_game(game, string_date)
 
 
 def save_data():
-    print("saving data to mongodb")
+    print_out("saving data to mongodb")
     for teamId, dates in scored_data.items():
         team_collection = db[str(teamId)]
 
@@ -64,14 +69,14 @@ def save_data():
 
 
 def get_all_data():
-    print("getting all data")
+    print_out("getting all data")
     start_date = str(date(date.today().year, 1, 1))
     end_date = str(date.today())
     schedule = requests.get(f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate={start_date}&endDate={end_date}&gameType=R").json()
 
     process_dates(schedule["dates"])
     save_data()
-    print("done processing")
+    print_out("done processing")
 
 
 get_all_data()
