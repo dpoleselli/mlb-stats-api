@@ -77,6 +77,8 @@ def get_all_data():
 
     process_dates(schedule["dates"])
     save_data()
+    scored_data.clear()
+    allowed_data.clear()
     print_out("done processing")
 
 
